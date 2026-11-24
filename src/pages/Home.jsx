@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import Noise from "../components/Noise.jsx";
 import SlideCommit from "../components/SlideCommit.jsx";
 import { Link } from "react-router-dom";
@@ -6,8 +5,18 @@ import BrandLogo from "../components/BrandLogo.jsx";
 import "./Home.css";
 
 function Home() {
-  const navigate = useNavigate();
   const isAuthenticated = Boolean(localStorage.getItem("token"));
+
+  // Navigate to the target route. In Telegram's webview, React Router's navigate()
+  // called from inside a setTimeout/.then() chain can leave a blank frame because
+  // the Noise canvas cleanup + route unmount happen in the same paint cycle.
+  // Using window.location.href forces a full navigation that the SPA 404→index.html
+  // trick resolves correctly, and Telegram renders it without the black-screen gap.
+  const goNext = () => {
+    const path = isAuthenticated ? "/dashboard" : "/register";
+    // Use href so Telegram webview gets a clean page load — no blank frame.
+    window.location.href = path;
+  };
 
   return (
     <main className="home-page">
@@ -36,13 +45,13 @@ function Home() {
           >
             Donate
           </Link>
-          <button type="button" onClick={() => navigate("/login")}>
+          <button type="button" onClick={() => { window.location.href = "/login"; }}>
             Log in
           </button>
           <button
             type="button"
             className="home-nav-cta"
-            onClick={() => navigate("/register")}
+            onClick={() => { window.location.href = "/register"; }}
           >
             Get started
           </button>
@@ -62,14 +71,7 @@ function Home() {
               label={isAuthenticated ? "Slide to open dashboard" : "Slide to get started"}
               doneLabel="Let&apos;s go"
               errorLabel="please log in"
-              onConfirm={() =>
-                new Promise((resolve) => {
-                  setTimeout(resolve, 350);
-                })
-              }
-              onDone={() =>
-                navigate(isAuthenticated ? "/dashboard" : "/register")
-              }
+              onDone={goNext}
               width={390}
               height={58}
               trackColor="#1f241f"
