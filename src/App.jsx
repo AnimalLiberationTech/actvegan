@@ -19,7 +19,10 @@ function App() {
 
   // Telegram Mini App detection — always called at top level (Rules of Hooks)
   const { isInTelegram } = useTelegramApp();
-  const [tgAuthDone, setTgAuthDone] = useState(false);
+  // Persist across navigations: true if already has a token OR fallback was already triggered.
+  const [tgAuthDone, setTgAuthDone] = useState(
+    () => !!localStorage.getItem("token") || sessionStorage.getItem("tgAuthDone") === "1"
+  );
 
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!localStorage.getItem("token")
@@ -193,11 +196,15 @@ function App() {
     return (
       <TelegramLogin
         onLogin={() => {
+          sessionStorage.setItem("tgAuthDone", "1");
           setIsAuthenticated(true);
           setTgAuthDone(true);
           navigate("/dashboard");
         }}
-        onFallback={() => setTgAuthDone(true)}
+        onFallback={() => {
+          sessionStorage.setItem("tgAuthDone", "1");
+          setTgAuthDone(true);
+        }}
       />
     );
   }

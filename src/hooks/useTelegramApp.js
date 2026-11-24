@@ -21,7 +21,10 @@ export function useTelegramApp() {
       tgRef.current = webapp;
       tgUserRef.current = webapp.initDataUnsafe?.user ?? null;
       initDataRef.current = webapp.initData ?? "";
-      isInTelegramRef.current = Boolean(webapp.initData);
+      // Only treat as "in Telegram" if initData is non-empty AND a user object is present.
+      // This avoids false positives when window.Telegram.WebApp exists but was not launched
+      // via a Mini App entry point (initData is empty string in that case).
+      isInTelegramRef.current = Boolean(webapp.initData && webapp.initDataUnsafe?.user);
       themeParamsRef.current = webapp.themeParams ?? null;
 
       // Sync Telegram theme params to CSS variables
