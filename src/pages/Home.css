@@ -1,0 +1,254 @@
+.home-page {
+  position: relative;
+  min-height: 100vh;
+  padding: 24px clamp(24px, 5vw, 72px) 28px;
+  color: #1f241f;
+  background:
+    radial-gradient(circle at 78% 28%, rgba(183, 243, 107, 0.2), transparent 24rem),
+    #f4f3ed;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.home-page>*:not(.noise-overlay) {
+  position: relative;
+  z-index: 1;
+}
+
+.home-page>.noise-overlay {
+  z-index: 0;
+}
+
+.home-nav,
+.home-footer {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.home-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.home-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.home-nav-actions button {
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.home-nav-cta {
+  padding: 11px 17px;
+  border-radius: 999px !important;
+  color: #f4f3ed !important;
+  background: #1f241f !important;
+}
+
+.home-hero {
+  width: 100%;
+  max-width: 1280px;
+  flex: 1;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.82fr);
+  align-items: center;
+  gap: clamp(40px, 8vw, 140px);
+  padding: clamp(70px, 11vh, 150px) 0;
+}
+
+.home-hero-copy {
+  max-width: 620px;
+}
+
+.home-hero-copy h1 {
+  max-width: 650px;
+  margin: 0;
+  font-size: clamp(56px, 8vw, 112px);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.home-hero-copy h1 span {
+  color: #899b75;
+}
+
+.home-description {
+  max-width: 390px;
+  margin: 32px 0 0;
+  color: #697066;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.home-action {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 40px;
+}
+
+.home-hero-art {
+  position: relative;
+  min-height: 420px;
+}
+
+.home-orb {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.home-orb-large {
+  width: min(34vw, 430px);
+  aspect-ratio: 1;
+  right: 4%;
+  top: 7%;
+  background: #dce8c5;
+}
+
+.home-orb-small {
+  width: 116px;
+  aspect-ratio: 1;
+  right: 0;
+  bottom: 5%;
+  background: #b7f36b;
+}
+
+.home-note {
+  position: absolute;
+  color: #788170;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.home-note-top {
+  top: 4%;
+  left: 4%;
+}
+
+.home-note-bottom {
+  right: 2%;
+  bottom: 2%;
+}
+
+.home-art-card {
+  position: absolute;
+  top: 35%;
+  left: 8%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 250px;
+  padding: 20px 22px;
+  border: 1px solid rgba(31, 36, 31, 0.08);
+  border-radius: 18px;
+  color: #f4f3ed;
+  background: rgba(31, 36, 31, 0.92);
+  box-shadow: 0 24px 60px rgba(31, 36, 31, 0.14);
+  transform: rotate(-7deg);
+}
+
+.home-art-check {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #1f241f;
+  background: #b7f36b;
+  font-weight: 700;
+}
+
+.home-art-card strong,
+.home-art-card small {
+  display: block;
+}
+
+.home-art-card strong {
+  font-size: 15px;
+}
+
+.home-art-card small {
+  margin-top: 4px;
+  color: #abb3a7;
+  font-size: 12px;
+}
+
+.home-footer {
+  padding-top: 18px;
+  border-top: 1px solid rgba(31, 36, 31, 0.1);
+  color: #92998e;
+  font-size: 11px;
+}
+
+@media (max-width: 760px) {
+  .home-page {
+    padding: 20px;
+  }
+
+  .home-nav-actions {
+    gap: 12px;
+  }
+
+  .home-nav-actions button:first-child {
+    display: none;
+  }
+
+  .home-hero {
+    display: block;
+    padding: 84px 0 72px;
+  }
+
+  .home-hero h1 {
+    font-size: clamp(58px, 18vw, 90px);
+  }
+
+  .home-description {
+    font-size: 16px;
+  }
+
+  .home-action {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .home-hero-art {
+    min-height: 280px;
+    margin-top: 36px;
+  }
+
+  .home-orb-large {
+    width: 300px;
+    right: 5%;
+  }
+
+  .home-art-card {
+    top: 30%;
+    left: 4%;
+  }
+
+  .home-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
