@@ -22,6 +22,7 @@ API.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
+      sessionStorage.removeItem("tgAuthDone");
       window.location.reload();
     }
     return Promise.reject(error);
@@ -113,7 +114,12 @@ async telegramAuth(payload) {
     );
     return { success: true, data: response.data };
   } catch (error) {
-    return { success: false, error: error.message };
+    const detail = error.response?.data?.detail;
+    const message =
+      (typeof detail === "object" && detail?.message) ||
+      (typeof detail === "string" && detail) ||
+      error.message;
+    return { success: false, error: message };
   }
 },
 };

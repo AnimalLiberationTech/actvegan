@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { taskService } from "../services/taskService.js";
 import { userService } from "../services/userService.js";
+import { canChangeUserType, isAdmin } from "../models/policies.js";
 import TaskForm from "../components/TaskForm.jsx";
 
-const ADMIN_TYPES = ["admin", "super_admin"];
-
 function AdminDashboard({ user }) {
-  const isSuperAdmin = user?.user_type === "super_admin";
+  const userIsAdmin = isAdmin(user);
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({
@@ -42,10 +41,10 @@ function AdminDashboard({ user }) {
   };
 
   useEffect(() => {
-    if (!ADMIN_TYPES.includes(user?.user_type)) return undefined;
+    if (!userIsAdmin) return undefined;
     const loadTimer = setTimeout(loadData, 0);
     return () => clearTimeout(loadTimer);
-  }, [user?.user_type]);
+  }, [userIsAdmin]);
 
   const resetForm = () => {
     setForm({
@@ -116,13 +115,14 @@ function AdminDashboard({ user }) {
   };
 
   const handleUserStatus = async (targetUser) => {
+    if (!canChangeUserType(user, targetUser)) return;
     const enabled = targetUser.user_type !== "disabled";
     const result = await userService.setUserEnabled(targetUser.id, !enabled);
     if (result.success) await loadData();
     else setError(result.error);
   };
 
-  if (!ADMIN_TYPES.includes(user?.user_type)) return null;
+  if (!userIsAdmin) return null;
 
   return (
     <section className="grid gap-4 sm:gap-6">
@@ -174,19 +174,21 @@ function AdminDashboard({ user }) {
             {users.length === 0 && <p className="empty-state">No users found.</p>}
             {users.map((targetUser) => {
               const enabled = targetUser.user_type !== "disabled";
+              const canToggleUser = canChangeUserType(user, targetUser);
               return (
                 <div key={targetUser.id} className="admin-item">
                   <div>
                     <p>{targetUser.display_name ?? targetUser.email}</p>
                     <p className="subtle">{targetUser.user_type} · {enabled ? "Enabled" : "Disabled"}</p>
                   </div>
-                  <button
-                    onClick={() => handleUserStatus(targetUser)}
-                    disabled={!isSuperAdmin}
-                    className="btn-link"
-                  >
-                    {enabled ? "Disable" : "Enable"}
-                  </button>
+                  {canToggleUser && (
+                    <button
+                      onClick={() => handleUserStatus(targetUser)}
+                      className="btn-link"
+                    >
+                      {enabled ? "Disable" : "Enable"}
+                    </button>
+                  )}
                 </div>
               );
             })}

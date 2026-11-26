@@ -12,6 +12,7 @@ export function createUser(data = {}) {
   return {
     ...DEFAULT_USER,
     ...data,
+    id: data.id ?? data.user_id ?? DEFAULT_USER.id,
     user_type: String(data.user_type ?? DEFAULT_USER.user_type).toLowerCase(),
   };
 }

@@ -5,49 +5,29 @@ import BrandLogo from "./BrandLogo.jsx";
 
 /**
  * Handles automatic Telegram authentication when the app is opened inside Telegram.
- * Calls POST /auth/telegram with the signed Telegram user data.
- * On success calls onLogin(data). Falls back to normal login if not in Telegram.
+ * Calls POST /auth/telegram with the raw signed Telegram Mini App initData string.
+ * On success calls onLogin(data). Falls back to normal login on failure.
  */
 function TelegramLogin({ onLogin, onFallback }) {
   const { isInTelegram, tgUser, initData } = useTelegramApp();
-  const [status, setStatus] = useState("idle"); // idle | authenticating | success | error
+  const [status, setStatus] = useState(
+    () => (isInTelegram && initData ? "authenticating" : "idle")
+  ); // idle | authenticating | success | error
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!isInTelegram || !tgUser) return;
+    if (!isInTelegram) return;
 
-    // Parse initData query params to extract hash and auth_date
-    const params = new URLSearchParams(initData);
-    const hash = params.get("hash");
-    const auth_date = parseInt(params.get("auth_date"), 10);
-    const userStr = params.get("user");
-
-    if (!hash || !auth_date) {
+    if (!initData) {
       onFallback?.();
       return;
     }
 
-    let user = tgUser;
-    if (userStr) {
-      try {
-        user = JSON.parse(userStr);
-      } catch {
-        // keep tgUser as fallback
-      }
-    }
+    let cancelled = false;
+    let fallbackTimer = null;
 
-    const payload = {
-      id: user.id,
-      first_name: user.first_name ?? "",
-      ...(user.last_name !== undefined ? { last_name: user.last_name } : {}),
-      ...(user.username !== undefined ? { username: user.username } : {}),
-      ...(user.photo_url !== undefined ? { photo_url: user.photo_url } : {}),
-      auth_date,
-      hash,
-    };
-
-    setStatus("authenticating");
-    taskAPI.telegramAuth(payload).then((result) => {
+    taskAPI.telegramAuth({ init_data: initData }).then((result) => {
+      if (cancelled) return;
       if (result.success) {
         localStorage.setItem("token", result.data.token);
         setStatus("success");
@@ -55,13 +35,20 @@ function TelegramLogin({ onLogin, onFallback }) {
       } else {
         setStatus("error");
         setError(result.error || "Telegram authentication failed");
-        setTimeout(() => onFallback?.(), 2000);
+        fallbackTimer = setTimeout(() => {
+          if (!cancelled) onFallback?.();
+        }, 2000);
       }
     });
-    // onLogin / onFallback are stable refs passed from App — intentionally omitted from deps
-    // to avoid re-triggering auth when parent re-renders
+
+    return () => {
+      cancelled = true;
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
+    // onLogin / onFallback are stable callbacks from App — intentionally omitted from deps
+    // to avoid re-triggering auth when parent re-renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInTelegram, tgUser, initData]);
+  }, [isInTelegram, initData]);
 
   if (!isInTelegram) return null;
 

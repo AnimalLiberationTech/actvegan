@@ -13,6 +13,7 @@ import Stats from "./pages/Stats.jsx";
 import Donate from "./pages/Donate.jsx";
 import TelegramLogin from "./components/TelegramLogin.jsx";
 import { useTelegramApp } from "./hooks/useTelegramApp.js";
+import { isAdmin } from "./models/policies.js";
 import "./index.css";
 
 function App() {
@@ -79,7 +80,7 @@ function App() {
     setUserLoading(true);
     const result = await userService.getCurrentUser();
     if (result.success) {
-      setUsername(result.data.email);
+      setUsername(result.data.display_name || result.data.email);
       setCurrentUser(result.data);
     } else {
       setError(result.error);
@@ -108,6 +109,10 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    if (isInTelegram) {
+      sessionStorage.setItem("tgAuthDone", "1");
+      setTgAuthDone(true);
+    }
     setIsAuthenticated(false);
     setCurrentUser(null);
     navigate("/login");
@@ -184,6 +189,23 @@ function App() {
 
 
   if (isAuthenticated && (userLoading || !currentUser)) {
+    if (!userLoading && error) {
+      return (
+        <div className="grid min-h-screen place-items-center px-4">
+          <div className="panel w-full max-w-[440px] p-6 text-center">
+            <div className="notice notice-error">{error}</div>
+            <div className="flex justify-center gap-3">
+              <button type="button" className="btn btn-primary" onClick={fetchUser}>
+                Retry
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={handleLogout}>
+                Log out
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="grid min-h-screen place-items-center px-4">
         <p className="loading-state py-7 text-center text-[var(--muted)]">Loading your account...</p>
@@ -191,15 +213,14 @@ function App() {
     );
   }
 
-  // Inside Telegram and not yet authenticated: attempt auto-login via initData
+  // Inside Telegram and not yet authenticated: attempt auto-login/registration via initData
   if (isInTelegram && !isAuthenticated && !tgAuthDone) {
     return (
       <TelegramLogin
         onLogin={() => {
-          sessionStorage.setItem("tgAuthDone", "1");
           setIsAuthenticated(true);
           setTgAuthDone(true);
-          navigate("/dashboard");
+          navigate("/dashboard", { replace: true });
         }}
         onFallback={() => {
           sessionStorage.setItem("tgAuthDone", "1");
@@ -254,17 +275,15 @@ function App() {
     </div>
   );
 
+  const userIsAdmin = isAdmin(currentUser);
+
   const authenticatedRoutes = (
     <>
       <Route
         path="/"
         element={
           <Navigate
-            to={
-              ["admin", "super_admin"].includes(currentUser?.user_type)
-                ? "/admin"
-                : "/dashboard"
-            }
+            to={userIsAdmin ? "/admin" : "/dashboard"}
             replace
           />
         }
@@ -272,7 +291,7 @@ function App() {
       <Route
         path="/dashboard"
         element={
-          ["admin", "super_admin"].includes(currentUser?.user_type) ? (
+          userIsAdmin ? (
             <Navigate to="/admin" replace />
           ) : (
             taskDashboard
@@ -282,7 +301,7 @@ function App() {
       <Route
         path="/admin"
         element={
-          ["admin", "super_admin"].includes(currentUser?.user_type) ? (
+          userIsAdmin ? (
             <AdminDashboard user={currentUser} />
           ) : (
             <Navigate to="/dashboard" replace />
@@ -293,11 +312,7 @@ function App() {
         path="*"
         element={
           <Navigate
-            to={
-              ["admin", "super_admin"].includes(currentUser?.user_type)
-                ? "/admin"
-                : "/dashboard"
-            }
+            to={userIsAdmin ? "/admin" : "/dashboard"}
             replace
           />
         }
@@ -312,7 +327,7 @@ function App() {
         username={username}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
-        isAdmin={["admin", "super_admin"].includes(currentUser?.user_type)}
+        isAdmin={userIsAdmin}
       />
       <div className="min-h-[calc(100vh-65px)] px-2.5 py-5 sm:px-4 sm:py-12">
         <div className="mx-auto w-full max-w-[1120px]">

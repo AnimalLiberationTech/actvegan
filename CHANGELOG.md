@@ -2,6 +2,23 @@
 
 All notable changes across `actfta-api` (backend) and `actfta` (frontend) are documented here, newest first.
 
+## 2026-11-26
+
+- **Telegram Mini App Auto-Login & Registration (`actfta`, `actfta-api`):**
+  - Updated `TelegramAuthAdapter` (`src/adapters/auth/telegram.py`), `TelegramWebAppAuthRequest` (`src/api/request_schemas.py`), and `POST /auth/telegram` (`src/api/routers/auth.py`) to verify Telegram Mini App `initData` strings using `HMAC-SHA256("WebAppData", bot_token)` while retaining backwards-compatible Login Widget verification (`SHA256(bot_token)`).
+  - Refactored `useTelegramApp` (`src/hooks/useTelegramApp.js`) to initialize Telegram WebApp context synchronously via `useState` instead of post-render `useRef` mutations, ensuring `App.jsx` detects `isInTelegram` on initial render.
+  - Updated `TelegramLogin` (`src/components/TelegramLogin.jsx`) to submit raw `{ init_data }` to `POST /auth/telegram` with cleanup guards, and updated `App.jsx` + `api.js` (`401` interceptor) to recover cleanly on expired tokens without blocking manual logout.
+  - Synced `openapi.json` and added unit/router tests in `actfta-api/src/tests/test_telegram_auth.py` and Playwright E2E tests in `actfta/tests/telegram-auto-login.spec.ts`.
+
+## 2026-11-24
+
+- **Sentry Logging & Telemetry (`actfta-api`):**
+  - Created `LoggingPort` (`src/ports/logging_port.py`) defining contracts for structured logging (`info`, `warning`, `error`) and exception/message telemetry (`capture_exception`, `capture_message`).
+  - Implemented `SentryLoggingAdapter` (`src/adapters/logging/sentry.py`) integrating `sentry-sdk` 3.0 with automatic breadcrumb recording, isolated scope context, and graceful fallback to standard Python logging when Sentry is unconfigured.
+  - Added Sentry configuration settings (`sentry_dsn`, `sentry_environment`, `sentry_traces_sample_rate`, `sentry_profiles_sample_rate`) in `Settings` (`src/core/config.py`).
+  - Registered `get_logging_adapter` provider in `src/core/dependencies.py` and hooked Sentry initialization into FastAPI startup in `src/api/app.py`.
+  - Added unit test suite in `src/tests/test_logging_adapter.py`.
+
 ## 2026-11-22
 
 - **Favicon & Asset Cleanup (`actfta`):**

@@ -1,7 +1,9 @@
 # SYSTEM CONTEXT: ActVegan Frontend (`actfta`)
 
 > [!CAUTION]
-> - **Keep API contracts synchronized across both repos:** whenever routes or Pydantic schemas change in `actfta-api`, re-export `http://127.0.0.1:8000/openapi.json` to `openapi.json` and update `src/models/` + `src/services/` in lockstep.
+> - **Keep API contracts synchronized across both repos:** 
+>   - If routes or Pydantic schemas change in `actfta-api`, re-export `http://127.0.0.1:8000/openapi.json` to `openapi.json` and update `src/models/` + `src/services/` in lockstep.
+>   - If backend user policies change in `../actfta-api/src/domain/policies.py`, update `src/models/policies.js` accordingly.
 > - **NEVER commit or log secrets:** Keep tokens, passwords, and sensitive credentials out of version control, client-side bundles, and log statements.
 > - **Preserve auth-gated route boundaries:** Do not bypass `userReady` or role checks (`disabled`, `user`, `admin`, `super_admin`) when routing in `src/App.jsx`.
 
@@ -40,15 +42,18 @@
   - App waits for `GET /users/me` (`userReady`) before determining role landing routes.
   - `disabled`: Default state for self-registered users awaiting admin approval. Redirected from action features until enabled.
   - `user`: Land on `/dashboard` (personal activist task creation and list).
-  - `admin` / `super_admin`: Land on `/admin` (`AdminDashboard.jsx` with advanced `TaskForm` and user enable/disable controls; UI disable button restricted to `super_admin`).
+  - `admin` / `super_admin`: Land on `/admin` (`AdminDashboard.jsx` with advanced `TaskForm` and user enable/disable controls gated by `canChangeUserType` in `src/models/policies.js`).
   - Public routes: `/` (`Home.jsx` with `<Noise />` canvas, `<SlideCommit />` CTA), `/stats`, `/donate`.
 - **Styling & Theme (`src/index.css`):**
   - Tailwind CSS v4 (`@import "tailwindcss";`).
   - Light/Dark theme via CSS custom properties on `:root` and `:root.dark`, persisted in `localStorage.theme`.
   - Typography: `Neucha` font used for display titles and branding.
 - **Key Backend RBAC & Task Policies (Frontend Impact):**
-  - Task Visibility: Only `admin` and `super_admin` may create `public` tasks or modify visibility; regular `user` may only create `private` tasks.
-  - Skills & Tools: Assigning users to tasks (`POST /tasks/{task_id}/assign/{user_id}`) requires matching required `skills` and `tools`; returns HTTP `409` (`AssignmentRequirementsNotMet`) if requirements are not met.
+  - **Policy Source of Truth:** Always inspect and rely on `../actfta-api/src/domain/policies.py` for user authorization rules when building or updating role checks, admin controls, or task/resource permissions. Treat frontend checks as UX hints only—the backend enforces all policies and may return `403`/`409`.
+  - **User Type / Role Changes (`can_change_user_type`):** No user may change their own `user_type`. `super_admin` may change any other user's type; `admin` may change any other user's type except a `super_admin`'s; regular `user` and `disabled` accounts cannot change user types.
+  - **Task Visibility (`can_create_public_task`, `can_create_task`, `can_change_task_visibility`):** Only `admin` and `super_admin` may create `public` tasks or modify visibility; regular `user` may only create `private` tasks.
+  - **Tools & Skills Management (`can_manage_tools`, `can_manage_skills`):** Only `admin` and `super_admin` may create, update, or delete tools and skills.
+  - **Skills & Tools Assignment:** Assigning users to tasks (`POST /tasks/{task_id}/assign/{user_id}`) requires matching required `skills` and `tools`; returns HTTP `409` (`AssignmentRequirementsNotMet`) if requirements are not met.
 - **Active Frontend WIP & Known Issues:**
   - Migrate hardcoded `http://127.0.0.1:8000` references in `src/services/api.js`, `src/pages/Login.jsx`, and `src/pages/Register.jsx` to `import.meta.env.VITE_API_URL`.
   - Frontend repo git repository setup (currently a standalone sibling directory).
@@ -59,4 +64,4 @@
 - **Keep API contracts synchronized:** Whenever routes or Pydantic schemas change in `actfta-api`, re-export `http://127.0.0.1:8000/openapi.json` to `openapi.json` and update `src/models/` + `src/services/` in lockstep.
 - **Frontend Tooling:** Use Node.js `>= 20` and `npm`. Run `npm run dev` for dev server, `npm run build` for production bundle verification, `npm run lint` for ESLint, and `npx playwright test` for E2E tests.
 - **Login API Contract:** `POST /auth/login` expects JSON `{"email": "...", "password": "..."}` and returns `{"token": "...", "user_id": "...", "email": "..."}`.
-- **Multi-Repo Sandboxes:** When running AI agents across both repositories, ensure access to both `/Users/am/projects/vegan/actfta` and `/Users/am/projects/vegan/actfta-api`.
+- **Multi-Repo Sandboxes:** When running AI agents across both repositories, ensure access to both `~/projects/vegan/actfta` and `~/projects/vegan/actfta-api`.
