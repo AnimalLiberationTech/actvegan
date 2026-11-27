@@ -107,8 +107,8 @@ async setUserEnabled(id, enabled) {
 
 async telegramAuth(payload) {
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000"}/auth/telegram`,
+    const response = await API.post(
+      "/auth/telegram",
       payload,
       { headers: { "Content-Type": "application/json" } }
     );

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import API from "../services/api.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 
 function Register({ onRegister, onSwitchToLogin }) {
@@ -15,7 +15,7 @@ function Register({ onRegister, onSwitchToLogin }) {
     setLoading(true);
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000"}/auth/register`, {
+      await API.post("/auth/register", {
         email,
         password,
         display_name: username,

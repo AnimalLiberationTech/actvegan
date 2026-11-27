@@ -3,7 +3,7 @@
 > [!CAUTION]
 > - **Keep API contracts synchronized across both repos:** 
 >   - If routes or Pydantic schemas change in `actfta-api`, re-export `http://127.0.0.1:8000/openapi.json` to `openapi.json` and update `src/models/` + `src/services/` in lockstep.
->   - If backend user policies change in `../actfta-api/src/domain/policies.py`, update `src/models/policies.js` accordingly.
+>   - If backend policies change in `../actfta-api/src/domain/policies.py`, update `src/models/policies.js` accordingly.
 > - **NEVER commit or log secrets:** Keep tokens, passwords, and sensitive credentials out of version control, client-side bundles, and log statements.
 > - **Preserve auth-gated route boundaries:** Do not bypass `userReady` or role checks (`disabled`, `user`, `admin`, `super_admin`) when routing in `src/App.jsx`.
 
@@ -54,9 +54,17 @@
   - **Task Visibility (`can_create_public_task`, `can_create_task`, `can_change_task_visibility`):** Only `admin` and `super_admin` may create `public` tasks or modify visibility; regular `user` may only create `private` tasks.
   - **Tools & Skills Management (`can_manage_tools`, `can_manage_skills`):** Only `admin` and `super_admin` may create, update, or delete tools and skills.
   - **Skills & Tools Assignment:** Assigning users to tasks (`POST /tasks/{task_id}/assign/{user_id}`) requires matching required `skills` and `tools`; returns HTTP `409` (`AssignmentRequirementsNotMet`) if requirements are not met.
+- **Telegram Mini App Auth (`src/hooks/useTelegramApp.js`, `src/components/TelegramLogin.jsx`):**
+  - `useTelegramApp` **must initialize synchronously** via `useState(readTelegramContext)` — not `useEffect`. Using `useEffect` causes `isInTelegram` to be `false` on first render, skipping the Telegram gate entirely.
+  - `isInTelegram` requires **both** `initData` truthy AND `tgUser` non-null. Outside Telegram, `window.Telegram.WebApp` is defined by the SDK but `initData === ""`.
+  - `TelegramLogin` sends `{ init_data: initData }` (the raw URL-encoded string) to `POST /auth/telegram`. The backend discriminates Mini App vs Login Widget payloads by presence of the `init_data` key.
+  - `sessionStorage.tgAuthDone` guards the auto-login gate across React Router navigations. Set it in `TelegramLogin.onLogin` / `onFallback`; the 401 interceptor in `api.js` clears it (`sessionStorage.removeItem("tgAuthDone")`) so token expiry forces re-auth.
+  - `GET /users/me` returns `display_name` — use `result.data.display_name || result.data.email` for the navbar username (not just `email`).
+  - Backend domain error format: `{ detail: { error_code, message } }`. Extract: `detail?.message` → `detail` (string) → `error.message`.
+  - Playwright E2E tests: `tests/telegram-auto-login.spec.ts`. Tests spin up their own Node HTTP server over `dist/`; no `webServer` entry in `playwright.config.ts` needed.
 - **Active Frontend WIP & Known Issues:**
-  - Migrate hardcoded `http://127.0.0.1:8000` references in `src/services/api.js`, `src/pages/Login.jsx`, and `src/pages/Register.jsx` to `import.meta.env.VITE_API_URL`.
   - Frontend repo git repository setup (currently a standalone sibling directory).
+  - `logo.png` is 1.46 MB — optimize before production deployment.
 
 ## 4. TOOLING GOTCHAS
 - **Common `CHANGELOG.md`:** Keep only a single common `CHANGELOG.md` synchronized across both repos (`actfta` and `actfta-api`), newest entries first.
@@ -64,4 +72,5 @@
 - **Keep API contracts synchronized:** Whenever routes or Pydantic schemas change in `actfta-api`, re-export `http://127.0.0.1:8000/openapi.json` to `openapi.json` and update `src/models/` + `src/services/` in lockstep.
 - **Frontend Tooling:** Use Node.js `>= 20` and `npm`. Run `npm run dev` for dev server, `npm run build` for production bundle verification, `npm run lint` for ESLint, and `npx playwright test` for E2E tests.
 - **Login API Contract:** `POST /auth/login` expects JSON `{"email": "...", "password": "..."}` and returns `{"token": "...", "user_id": "...", "email": "..."}`.
+- **Telegram Auth API Contract:** `POST /auth/telegram` accepts two shapes — Mini App: `{"init_data": "<url-encoded-string>"}`, Login Widget: `{"id", "first_name", "auth_date", "hash", ...}`. Backend auto-discriminates by presence of `init_data`. On success returns the same `{"token", "user_id", "email"}` shape as login.
 - **Multi-Repo Sandboxes:** When running AI agents across both repositories, ensure access to both `~/projects/vegan/actfta` and `~/projects/vegan/actfta-api`.
