@@ -128,7 +128,6 @@ function AdminDashboard({ user }) {
     <section className="grid gap-4 sm:gap-6">
       <div className="page-heading">
         <h1>Admin dashboard</h1>
-        <p>Manage tasks and user access.</p>
       </div>
 
       {error && <div className="notice notice-error">{error}</div>}

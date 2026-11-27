@@ -79,6 +79,10 @@ textarea.control { min-height: 92px; resize: vertical; }
 .btn-secondary { color: var(--page-text); background: transparent; border-color: var(--border); }
 .btn-danger { color: #fff; background: var(--danger); }
 .btn-link { padding: 4px; color: var(--primary); background: none; border: 0; font-weight: 700; }
+.field-toggle { min-height: 32px; padding: 6px 12px; color: var(--muted); background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 999px; font-size: .8125rem; font-weight: 600; transition: background .2s, border-color .2s, color .2s; }
+.field-toggle:hover { color: var(--page-text); border-color: var(--primary); }
+.field-toggle[aria-expanded="true"] { color: var(--page-text); background: color-mix(in srgb, var(--primary) 15%, transparent); border-color: var(--primary); }
+.field-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .notice { margin-bottom: 16px; padding: 12px 14px; border-radius: 10px; font-size: .9rem; }
 .notice-error { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
 .notice-success { color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, transparent); }
